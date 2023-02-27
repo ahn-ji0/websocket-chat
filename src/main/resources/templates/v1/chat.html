@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+
+
+<div class="container">
+  <div class="col-6">
+    <label><b>채팅방</b></label>
+  </div>
+  <div>
+    <div id="msgArea" class="col"></div>
+    <div class="col-6">
+      <div class="input-group mb-3">
+        <input type="text" id="msg">
+        <button class="btn btn-outline-secondary" type="button" id="button-send" onclick="send()">
+          전송
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+
+  const username = '유저' + Math.floor(Math.random() * 100);
+
+  const websocket = new WebSocket("ws://localhost:8080/ws/chat");
+
+  websocket.onmessage = onMessage;
+  websocket.onopen = onOpen;
+  websocket.onclose = onClose;
+
+  function send() {
+
+    let msg = document.getElementById("msg");
+
+    console.log(username + ":" + msg.value);
+    websocket.send(username + ":" + msg.value);
+    msg.value = '';
+  }
+
+  //채팅창에서 나갔을 때
+  function onClose(evt) {
+    var str = username + ": 님이 방을 나가셨습니다.";
+    websocket.send(str);
+  }
+
+  //채팅창에 들어왔을 때
+  function onOpen(evt) {
+    var str = username + ": 님이 입장하셨습니다.";
+    websocket.send(str);
+  }
+
+  function onMessage(msg) {
+    var data = msg.data;
+    var sessionId = null;
+    var message = null;
+
+    var arr = data.split(":");
+
+    var cur_session = username;
+
+    sessionId = arr[0];
+    message = arr[1];
+
+    console.log("sessionID : " + sessionId);
+    console.log("cur_session : " + cur_session);
+
+    if (sessionId == cur_session) {
+      var str = "<div class='col-6'>";
+      str += "<div class='alert alert-secondary'>";
+      str += "<b>" + sessionId + " : " + message + "</b>";
+      str += "</div></div>";
+      document.getElementById("msgArea").insertAdjacentHTML("beforeend", str);
+    } else {
+      var str = "<div class='col-6'>";
+      str += "<div class='alert alert-warning'>";
+      str += "<b>" + sessionId + " : " + message + "</b>";
+      str += "</div></div>";
+      document.getElementById("msgArea").insertAdjacentHTML("beforeend", str);
+    }
+  }
+
+</script>
+
+</body>
+</html>
